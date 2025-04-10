@@ -1,3 +1,5 @@
+<!-- Author: S1354032 陳泰銘 -->
+<!-- Github 線上版本: -->
 <!DOCTYPE html> 
 <html lang="zh">
 <head>
@@ -23,131 +25,168 @@
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="card p-4">
-        <h3 class="mb-3 text-center">Digital Logic Output Formatter</h3>
+    <div class="container">
+        <div class="card p-4">
+            <h3 class="mb-3 text-center">Digital Logic Output Formatter_Basic Version</h3>
 
-        <div class="mb-3">
-            <label for="mode" class="form-label">選擇格式:</label>
-            <select class="form-select" id="mode">
-                <option value="SOP">SOP (Sum of Products)</option>
-                <option value="POS">POS (Product of Sums)</option>
-            </select>
-        </div>
+            <div class="mb-3">
+                <label for="mode" class="form-label">選擇模式:</label>
+                <select class="form-select" id="mode">
+                    <option value="SOP">SOP (Sum of Products)</option>
+                    <option value="POS">POS (Product of Sums)</option>
+                </select>
+            </div>
 
-        <div class="mb-3">
-            <label for="input" class="form-label">請輸入邏輯表達式:</label>
-            <textarea class="form-control" id="input" rows="4" placeholder="例如：A'B + AB' + ..."></textarea>
-        </div>
+            <div class="mb-3">
+                <label for="input" class="form-label">請輸入邏輯表達式:</label>
+                <textarea class="form-control" id="input" rows="4" placeholder="例如：A'B + AB' + ..."></textarea>
+            </div>
 
-        <div class="d-grid mb-3">
-            <button class="btn btn-primary" onclick="formatExpression()">格式化</button>
-        </div>
+            <div class="d-grid mb-3">
+                <button class="btn btn-primary" onclick="formatExpression()">格式化</button>
+            </div>
 
-        <div class="mb-3">
-            <label for="output" class="form-label">格式化結果:</label>
-            <textarea class="form-control" id="output" rows="4" readonly></textarea>
+            <!-- 結果輸出區 -->
+            <div class="mb-3">
+                <label for="output" class="form-label">格式化結果:</label>
+                <textarea class="form-control" id="output" rows="4" readonly></textarea>
+                <div class="d-flex justify-content-between align-items-center mt-2">
+                    <span id="copyTip" class="text-muted medium" style="opacity: 0; transition: opacity 0.3s;">已複製！</span>
+                    <button class="btn btn-outline-danger btn-medium" onclick="copyToClipboard()">複製結果</button>
+                </div>
+            </div>
+
+            <div class="text-center text-muted">Author: S1354032 Tai Ming Chen, NCUE CC</div>
         </div>
-        <h5 class="text-center">Author: S1354032 Tai Ming Chen, NCUE CC</h5>
     </div>
-</div>
 
-<script>
-    class Letter {
-        constructor(s) {
-            this.name = s[0];
-            this.isPrime = s.endsWith("'");
-            this.value = this.name.charCodeAt(0) * 10 + (this.isPrime ? 1 : 0);
+    <script>
+        class Letter {
+            constructor(s) {
+                this.name = s[0];
+                this.isPrime = s.endsWith("'");
+                this.value = this.name.charCodeAt(0) * 10 + (this.isPrime ? 1 : 0);
+            }
+
+            toString() {
+                return this.name + (this.isPrime ? "'" : "");
+            }
         }
 
-        toString() {
-            return this.name + (this.isPrime ? "'" : "");
+        class Term {
+            constructor(letters) {
+                this.letters = letters;
+            }
+
+            toString() {
+                return this.letters.map(letter => letter.toString()).join("");
+            }
         }
-    }
 
-    class Term {
-        constructor(letters) {
-            this.letters = letters;
+        function cleanInput(expression) {
+            return expression
+                .replace(/\s|　/g, "")
+                .replace(/＋/g, "+")
+                .replace(/[＇`’‘‵]/g, "'")
+                .replace(/[（]/g, "(")
+                .replace(/[）]/g, ")");
         }
 
-        toString() {
-            return this.letters.map(letter => letter.toString()).join("");
-        }
-    }
-
-    function cleanInput(expression) {
-        return expression
-            .replace(/\s|　/g, "")
-            .replace(/＋/g, "+")
-            .replace(/[＇`’‘‵]/g, "'")
-            .replace(/[（]/g, "(")
-            .replace(/[）]/g, ")");
-    }
-
-    function autoSortSOP(expression) {
-        expression = cleanInput(expression).replace(/[()]/g, "");
-        const terms = expression.split("+").map(term => {
-            const letters = [];
-            for (let i = 0; i < term.length; i++) {
-                if (/[A-Za-z]/.test(term[i])) {
-                    const ch = term[i];
-                    const prime = term[i + 1] === "'";
-                    letters.push(new Letter(ch + (prime ? "'" : "")));
-                    if (prime) i++;
+        function autoSortSOP(expression) {
+            expression = cleanInput(expression).replace(/[()]/g, "");
+            const terms = expression.split("+").map(term => {
+                const letters = [];
+                for (let i = 0; i < term.length; i++) {
+                    if (/[A-Za-z]/.test(term[i])) {
+                        const ch = term[i];
+                        const prime = term[i + 1] === "'";
+                        letters.push(new Letter(ch + (prime ? "'" : "")));
+                        if (prime) i++;
+                    }
                 }
-            }
-            letters.sort((a, b) => a.value - b.value);
-            return new Term(letters);
-        });
-        terms.sort((a, b) => {
-            const al = a.letters;
-            const bl = b.letters;
-            for (let i = 0; i < Math.min(al.length, bl.length); i++) {
-                if (al[i].value !== bl[i].value) return al[i].value - bl[i].value;
-            }
-            return al.length - bl.length;
-        });
-        return terms.map(term => term.toString()).join("+");
-    }
-
-    function autoSortPOS(expression) {
-        expression = cleanInput(expression);
-        const terms = [...expression.matchAll(/\((.*?)\)/g)].map(match => {
-            const letters = [];
-            const raw = match[1];
-            for (let i = 0; i < raw.length; i++) {
-                if (/[A-Za-z]/.test(raw[i])) {
-                    const ch = raw[i];
-                    const prime = raw[i + 1] === "'";
-                    letters.push(new Letter(ch + (prime ? "'" : "")));
-                    if (prime) i++;
+                letters.sort((a, b) => a.value - b.value);
+                return new Term(letters);
+            });
+            terms.sort((a, b) => {
+                const al = a.letters;
+                const bl = b.letters;
+                for (let i = 0; i < Math.min(al.length, bl.length); i++) {
+                    if (al[i].value !== bl[i].value) return al[i].value - bl[i].value;
                 }
-            }
-            letters.sort((a, b) => a.value - b.value);
-            return new Term(letters);
-        });
-        terms.sort((a, b) => {
-            const al = a.letters;
-            const bl = b.letters;
-            for (let i = 0; i < Math.min(al.length, bl.length); i++) {
-                if (al[i].value !== bl[i].value) return al[i].value - bl[i].value;
-            }
-            return al.length - bl.length;
-        });
-        return terms.map(term => `(${term.letters.join("+")})`).join(".");
-    }
-
-    function formatExpression() {
-        const mode = document.getElementById("mode").value;
-        const input = document.getElementById("input").value;
-        let result = "";
-        try {
-            result = mode === "SOP" ? autoSortSOP(input) : autoSortPOS(input);
-        } catch (err) {
-            result = "錯誤: 請檢查輸入格式";
+                return al.length - bl.length;
+            });
+            return terms.map(term => term.toString()).join("+");
         }
-        document.getElementById("output").value = result;
-    }
-</script>
+
+        function autoSortPOS(expression) {
+            expression = cleanInput(expression);
+            const terms = [...expression.matchAll(/\((.*?)\)/g)].map(match => {
+                const letters = [];
+                const raw = match[1];
+                for (let i = 0; i < raw.length; i++) {
+                    if (/[A-Za-z]/.test(raw[i])) {
+                        const ch = raw[i];
+                        const prime = raw[i + 1] === "'";
+                        letters.push(new Letter(ch + (prime ? "'" : "")));
+                        if (prime) i++;
+                    }
+                }
+                letters.sort((a, b) => a.value - b.value);
+                return new Term(letters);
+            });
+            terms.sort((a, b) => {
+                const al = a.letters;
+                const bl = b.letters;
+                for (let i = 0; i < Math.min(al.length, bl.length); i++) {
+                    if (al[i].value !== bl[i].value) return al[i].value - bl[i].value;
+                }
+                return al.length - bl.length;
+            });
+            return terms.map(term => `(${term.letters.join("+")})`).join("");
+        }
+
+        function formatExpression() {
+            const mode = document.getElementById("mode").value;
+            const input = document.getElementById("input").value;
+            let result = "";
+            try {
+                result = mode === "SOP" ? autoSortSOP(input) : autoSortPOS(input);
+            } catch (err) {
+                result = "錯誤: 請檢查輸入格式";
+            }
+            document.getElementById("output").value = result;
+        }
+
+        function copyToClipboard() {
+            const output = document.getElementById("output");
+            output.select();
+            output.setSelectionRange(0, 99999); // 手機兼容
+            document.execCommand("copy");
+
+            const tip = document.getElementById("copyTip");
+            tip.style.opacity = 1;
+            setTimeout(() => tip.style.opacity = 0, 1500);
+        }
+    </script>
 </body>
 </html>
+
+<!--
+SOP TEST CASES:
+A‵BD＇ +  A   B   D’   + BCD + ABC‘ + AB'D
+=> ABC'+ABD'+AB'D+A'BD'+BCD
+
+A’BD` + DBC ＋ ABC‵ + AB‘D+A'A
+=> AA'+ABC'+AB'D+A'BD'+BCD
+
+BB'B+BA+A'A+A
+=> A+AA'+AB+BBB'
+
+POS TEST CASES:
+(B+D+A') . (A+B) . (C + A' + B) . (C + A)
+=> (A+B)(A+C)(A'+B+C)(A'+B+D)
+
+(A + B') . (C + A + D') . (B + A)
+=> (A+B)(A+B')(A+C+D')
+
+-->
