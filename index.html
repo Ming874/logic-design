@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html> 
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,7 +25,7 @@
 <body>
 <div class="container">
     <div class="card p-4">
-        <h3 class="mb-3 text-center">數位邏輯表達式格式化工具</h3>
+        <h3 class="mb-3 text-center">Digital Logic Output Formatter</h3>
 
         <div class="mb-3">
             <label for="mode" class="form-label">選擇格式:</label>
@@ -48,6 +48,7 @@
             <label for="output" class="form-label">格式化結果:</label>
             <textarea class="form-control" id="output" rows="4" readonly></textarea>
         </div>
+        <h5 class="text-center">Author: S1354032 Tai Ming Chen, NCUE CC</h5>
     </div>
 </div>
 
@@ -98,7 +99,14 @@
             letters.sort((a, b) => a.value - b.value);
             return new Term(letters);
         });
-        terms.sort((a, b) => a.toString().localeCompare(b.toString()));
+        terms.sort((a, b) => {
+            const al = a.letters;
+            const bl = b.letters;
+            for (let i = 0; i < Math.min(al.length, bl.length); i++) {
+                if (al[i].value !== bl[i].value) return al[i].value - bl[i].value;
+            }
+            return al.length - bl.length;
+        });
         return terms.map(term => term.toString()).join("+");
     }
 
@@ -116,10 +124,17 @@
                 }
             }
             letters.sort((a, b) => a.value - b.value);
-            return `(${letters.map(l => l.toString()).join("+")})`;
+            return new Term(letters);
         });
-        terms.sort();
-        return terms.join(".");
+        terms.sort((a, b) => {
+            const al = a.letters;
+            const bl = b.letters;
+            for (let i = 0; i < Math.min(al.length, bl.length); i++) {
+                if (al[i].value !== bl[i].value) return al[i].value - bl[i].value;
+            }
+            return al.length - bl.length;
+        });
+        return terms.map(term => `(${term.letters.join("+")})`).join(".");
     }
 
     function formatExpression() {
