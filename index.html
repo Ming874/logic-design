@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logic Expression Formatter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            margin-top: 50px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        textarea[readonly] {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card p-4">
+        <h3 class="mb-3 text-center">數位邏輯表達式格式化工具</h3>
+
+        <div class="mb-3">
+            <label for="mode" class="form-label">選擇格式:</label>
+            <select class="form-select" id="mode">
+                <option value="SOP">SOP (Sum of Products)</option>
+                <option value="POS">POS (Product of Sums)</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="input" class="form-label">請輸入邏輯表達式:</label>
+            <textarea class="form-control" id="input" rows="4" placeholder="例如：A'B + AB' + ..."></textarea>
+        </div>
+
+        <div class="d-grid mb-3">
+            <button class="btn btn-primary" onclick="formatExpression()">格式化</button>
+        </div>
+
+        <div class="mb-3">
+            <label for="output" class="form-label">格式化結果:</label>
+            <textarea class="form-control" id="output" rows="4" readonly></textarea>
+        </div>
+    </div>
+</div>
+
+<script>
+    class Letter {
+        constructor(s) {
+            this.name = s[0];
+            this.isPrime = s.endsWith("'");
+            this.value = this.name.charCodeAt(0) * 10 + (this.isPrime ? 1 : 0);
+        }
+
+        toString() {
+            return this.name + (this.isPrime ? "'" : "");
+        }
+    }
+
+    class Term {
+        constructor(letters) {
+            this.letters = letters;
+        }
+
+        toString() {
+            return this.letters.map(letter => letter.toString()).join("");
+        }
+    }
+
+    function cleanInput(expression) {
+        return expression
+            .replace(/\s|　/g, "")
+            .replace(/＋/g, "+")
+            .replace(/[＇`’‘‵]/g, "'")
+            .replace(/[（]/g, "(")
+            .replace(/[）]/g, ")");
+    }
+
+    function autoSortSOP(expression) {
+        expression = cleanInput(expression).replace(/[()]/g, "");
+        const terms = expression.split("+").map(term => {
+            const letters = [];
+            for (let i = 0; i < term.length; i++) {
+                if (/[A-Za-z]/.test(term[i])) {
+                    const ch = term[i];
+                    const prime = term[i + 1] === "'";
+                    letters.push(new Letter(ch + (prime ? "'" : "")));
+                    if (prime) i++;
+                }
+            }
+            letters.sort((a, b) => a.value - b.value);
+            return new Term(letters);
+        });
+        terms.sort((a, b) => a.toString().localeCompare(b.toString()));
+        return terms.map(term => term.toString()).join("+");
+    }
+
+    function autoSortPOS(expression) {
+        expression = cleanInput(expression);
+        const terms = [...expression.matchAll(/\((.*?)\)/g)].map(match => {
+            const letters = [];
+            const raw = match[1];
+            for (let i = 0; i < raw.length; i++) {
+                if (/[A-Za-z]/.test(raw[i])) {
+                    const ch = raw[i];
+                    const prime = raw[i + 1] === "'";
+                    letters.push(new Letter(ch + (prime ? "'" : "")));
+                    if (prime) i++;
+                }
+            }
+            letters.sort((a, b) => a.value - b.value);
+            return `(${letters.map(l => l.toString()).join("+")})`;
+        });
+        terms.sort();
+        return terms.join(".");
+    }
+
+    function formatExpression() {
+        const mode = document.getElementById("mode").value;
+        const input = document.getElementById("input").value;
+        let result = "";
+        try {
+            result = mode === "SOP" ? autoSortSOP(input) : autoSortPOS(input);
+        } catch (err) {
+            result = "錯誤: 請檢查輸入格式";
+        }
+        document.getElementById("output").value = result;
+    }
+</script>
+</body>
+</html>
