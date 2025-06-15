@@ -1,192 +1,303 @@
-<!-- Author: S1354032 陳泰銘 -->
-<!-- Github 線上版本: https://ming874.github.io/logic-design/-->
-<!DOCTYPE html> 
+<!--
+Author: S1354032 陳泰銘
+Version 3.6: 格式化完成後自動複製
+-->
+<!DOCTYPE html>
 <html lang="zh">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Logic Expression Formatter</title>
+    <title>Logic Expression Formatter (v3.6)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary: #4a90e2;
+            --primary-dark: #357ab8;
+            --accent: #50e3c2;
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
+            --radius: 0.75rem;
+            --transition: 0.25s ease;
+        }
+
+        * {
+            transition: var(--transition);
+        }
+
         body {
-            background-color: #f8f9fa;
+            background-color: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #333;
+            padding: 1rem;
         }
+
         .card {
-            margin-top: 50px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background-color: var(--card-bg);
+            border: none;
+            border-radius: var(--radius);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
         }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: var(--radius);
+            border: 1px solid #ccc;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+        }
+
+        .form-select {
+            background-color: var(--card-bg);
+            color: #333;
+        }
+
+        .form-select option {
+            color: #333;
+        }
+
         .btn-primary {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
+            background-color: var(--primary);
+            border-color: var(--primary);
+            border-radius: var(--radius);
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
         }
-        textarea[readonly] {
-            background-color: #e9ecef;
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+            transform: scale(1.02);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-outline-secondary {
+            border-radius: var(--radius);
+            padding: 0.4rem 1rem;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        #output.filled {
+            background-color: #e9ffe9;
+        }
+
+        #copyTip {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 150%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        [data-tooltip]:hover::after {
+            opacity: 1;
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="card p-4">
-            <h3 class="mb-3 text-center">Digital Logic Output Formatter_Basic Version</h3>
-
-            <div class="mb-3">
-                <label for="mode" class="form-label">選擇模式:</label>
-                <select class="form-select" id="mode">
-                    <option value="SOP">SOP (Sum of Products)</option>
-                    <option value="POS">POS (Product of Sums)</option>
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="input" class="form-label">請輸入邏輯表達式:</label>
-                <textarea class="form-control" id="input" rows="4" placeholder="例如：A'B + AB' + ..."></textarea>
-            </div>
-
-            <div class="d-grid mb-3">
-                <button class="btn btn-primary" onclick="formatExpression()">格式化</button>
-            </div>
-
-            <!-- 結果輸出區 -->
-            <div class="mb-3">
-                <label for="output" class="form-label">格式化結果:</label>
-                <textarea class="form-control" id="output" rows="4" readonly></textarea>
-                <div class="d-flex justify-content-between align-items-center mt-2">
-                    <span id="copyTip" class="text-muted medium" style="opacity: 0; transition: opacity 0.3s;">已複製！</span>
-                    <button class="btn btn-outline-danger btn-medium" onclick="copyToClipboard()">複製結果</button>
+    <div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="card w-100" style="max-width: 600px;">
+            <div class="p-4">
+                <h3 class="card-title text-center mb-4">Digital Logic Formatter v3.6</h3>
+                <div class="mb-3">
+                    <label for="mode" class="form-label">選擇模式:</label>
+                    <select class="form-select" id="mode" data-tooltip="選擇 SOP 或 POS 模式">
+                        <option value="SOP">SOP (Sum of Products)</option>
+                        <option value="POS">POS (Product of Sums)</option>
+                    </select>
                 </div>
+                <div class="mb-3 position-relative">
+                    <label for="input" class="form-label">請輸入邏輯表達式:</label>
+                    <textarea class="form-control" id="input" rows="4" placeholder="例如: Q1X2'+Q1'+Q2 ..."
+                        oninput="clearOutput()"></textarea>
+                    <button class="btn btn-sm btn-outline-secondary position-absolute" style="top: 38px; right: 10px;"
+                        onclick="document.getElementById('input').value=''; clearOutput();"
+                        data-tooltip="清除所有輸入">清除</button>
+                </div>
+                <div class="d-grid mb-3">
+                    <button class="btn btn-primary btn-lg" onclick="formatExpression()"
+                        data-tooltip="點擊或按 Ctrl+Enter 格式化">格式化(Ctrl+Enter)</button>
+                </div>
+                <div class="mb-3 position-relative">
+                    <label for="output" class="form-label">格式化結果:</label>
+                    <textarea class="form-control" id="output" rows="4" readonly></textarea>
+                    <span id="copyTip" class="text-muted small position-absolute"
+                        style="top: 38px; right: 10px; opacity: 0;">已複製！</span>
+                </div>
+                <div class="text-center text-muted small mt-3">Author: S1354032 陳泰銘</div>
             </div>
-
-            <div class="text-center text-muted">Author: S1354032 Tai Ming Chen, NCUE CSIE</div>
         </div>
     </div>
 
     <script>
-        class Letter {
-            constructor(s) {
-                this.name = s[0];
-                this.isPrime = s.endsWith("'");
-                this.value = this.name.charCodeAt(0) * 10 + (this.isPrime ? 1 : 0);
-            }
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && e.key === 'Enter') formatExpression();
+        });
 
-            toString() {
-                return this.name + (this.isPrime ? "'" : "");
-            }
+        function cleanInput(expr) {
+            return expr.replace(/\s|　/g, '')
+            .replace(/＋/g, '+')
+            .replace(/[＇`’‘‵]/g, "'")
+            .replace(/[（]/g, '(')
+            .replace(/[）]/g, ')');
         }
 
-        class Term {
-            constructor(letters) {
-                this.letters = letters;
-            }
-
-            toString() {
-                return this.letters.map(letter => letter.toString()).join("");
-            }
+        function parseVariablesInTerm(s) {
+            const vars = [];
+            let m;
+            while (m = /([A-Za-z]\d*)(?:('))?/g.exec(s)) {
+                s = s.slice(m.index + m[0].length);
+                const base = m[1], isPrime = !!m[2];
+                const p = base.match(/^([A-Za-z])(\d*)$/);
+                vars.push({
+                    alpha: p[1], num: p[2] === '' ? -1 : parseInt(p[2]), isPrime, original: m[0] 
+                });
+            } 
+            return vars;
         }
 
-        function cleanInput(expression) {
-            return expression
-                .replace(/\s|　/g, "")
-                .replace(/＋/g, "+")
-                .replace(/[＇`’‘‵]/g, "'")
-                .replace(/[（]/g, "(")
-                .replace(/[）]/g, ")");
+        function compareVariables(a, b) {
+            if (a.alpha < b.alpha) return -1;
+            if (a.alpha > b.alpha) return 1;
+            if (a.num < b.num) return -1; 
+            if (a.num > b.num) return 1; 
+            if (!a.isPrime && b.isPrime) return -1;
+            if (a.isPrime && !b.isPrime) return 1;
+            return 0;
         }
 
-        function autoSortSOP(expression) {
-            expression = cleanInput(expression).replace(/[()]/g, "");
-            const terms = expression.split("+").map(term => {
-                const letters = [];
-                for (let i = 0; i < term.length; i++) {
-                    if (/[A-Za-z]/.test(term[i])) {
-                        const ch = term[i];
-                        const prime = term[i + 1] === "'";
-                        letters.push(new Letter(ch + (prime ? "'" : "")));
-                        if (prime) i++;
-                    }
-                }
-                letters.sort((a, b) => a.value - b.value);
-                return new Term(letters);
-            });
-            terms.sort((a, b) => {
-                const al = a.letters;
-                const bl = b.letters;
-                for (let i = 0; i < Math.min(al.length, bl.length); i++) {
-                    if (al[i].value !== bl[i].value) return al[i].value - bl[i].value;
-                }
-                return al.length - bl.length;
-            });
-            return terms.map(term => term.toString()).join("+");
-        }
-
-        function autoSortPOS(expression) {
-            expression = cleanInput(expression);
-            const terms = [...expression.matchAll(/\((.*?)\)/g)].map(match => {
-                const letters = [];
-                const raw = match[1];
-                for (let i = 0; i < raw.length; i++) {
-                    if (/[A-Za-z]/.test(raw[i])) {
-                        const ch = raw[i];
-                        const prime = raw[i + 1] === "'";
-                        letters.push(new Letter(ch + (prime ? "'" : "")));
-                        if (prime) i++;
-                    }
-                }
-                letters.sort((a, b) => a.value - b.value);
-                return new Term(letters);
-            });
-            terms.sort((a, b) => {
-                const al = a.letters;
-                const bl = b.letters;
-                for (let i = 0; i < Math.min(al.length, bl.length); i++) {
-                    if (al[i].value !== bl[i].value) return al[i].value - bl[i].value;
-                }
-                return al.length - bl.length;
-            });
-            return terms.map(term => `(${term.letters.join("+")})`).join("");
+        function clearOutput() {
+            const o = document.getElementById('output');
+            o.value = '';
+            o.classList.remove('filled');
+            document.getElementById('copyTip').style.opacity = 0;
         }
 
         function formatExpression() {
-            const mode = document.getElementById("mode").value;
-            const input = document.getElementById("input").value;
-            let result = "";
-            try {
-                result = mode === "SOP" ? autoSortSOP(input) : autoSortPOS(input);
-            } catch (err) {
-                result = "錯誤: 請檢查輸入格式";
+            const mode = document.getElementById('mode').value, raw = document.getElementById('input').value;
+            const inStr = cleanInput(raw); if (!inStr) return;
+            const terms = mode === 'SOP' ? inStr.split('+') : [...inStr.matchAll(/\(([^)]+)\)/g)].map(m => m[1]);
+            const sorted = terms.filter(t => t).map(t => { const vs = parseVariablesInTerm(t); vs.sort(compareVariables); return vs; });
+            sorted.sort((a, b) => { 
+                for (let i = 0, l = Math.min(a.length, b.length); i < l; i++) {
+                    const c = compareVariables(a[i], b[i]);
+                    if (c) return c; 
+                }
+                return a.length - b.length; 
+            });
+            const joinC = mode === 'SOP' ? '' : '+';
+            const outStr = mode === 'SOP' ? sorted.map(v => v.map(x => x.original).join('')).join('+') : sorted.map(v => `(${v.map(x => x.original).join(joinC)})`).join('');
+            const o = document.getElementById('output');
+            o.value = outStr; o.classList.add('filled'); // 自動複製
+            autoCopy(o.value);
+        }
+        
+        function autoCopy(text) {
+            if (!text) return;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => showTip());
+            } else {
+                const t = document.createElement('textarea');
+                t.value = text; document.body.appendChild(t);
+                t.select(); document.execCommand('copy');
+                document.body.removeChild(t); showTip();
             }
-            document.getElementById("output").value = result;
         }
 
-        function copyToClipboard() {
-            const output = document.getElementById("output");
-            output.select();
-            output.setSelectionRange(0, 99999); // 手機兼容
-            document.execCommand("copy");
-
-            const tip = document.getElementById("copyTip");
-            tip.style.opacity = 1;
-            setTimeout(() => tip.style.opacity = 0, 1500);
-        }
+        function showTip() {
+            const t = document.getElementById('copyTip');
+            t.style.opacity = 1;
+            setTimeout(() => t.style.opacity = 0, 1500);
+        }  
     </script>
 </body>
+
 </html>
 
-<!--
-SOP TEST CASES:
-A‵BD＇ +  A   B   D’   + BCD + ABC‘ + AB'D
-=> ABC'+ABD'+AB'D+A'BD'+BCD
 
-A’BD` + DBC ＋ ABC‵ + AB‘D+A'A
-=> AA'+ABC'+AB'D+A'BD'+BCD
+<!-- 
+SOP 測資:
+    C + B' + A	            -> A+B'+C
+    B'A + DC'	            -> AB'+C'D
+    Q1' + Q2 + Q1X2'	    -> Q1X2'+Q1'+Q2
+    Y10 + X1' + Y2	        -> X1'+Y2+Y10
+    Q1' + Q1	            -> Q1+Q1'
+    Q1 + Q1X2'	            -> Q1+Q1X2'
+    CBA + BA	            -> AB+ABC
+    A'B'C + A'BD + A'B	    -> A'B+A'BD+A'B'C
+    A10B + C' + A2B'	    -> A2B'+A10B+C'
+    BA' + BA + A	        -> A+AB+A'B
+    C'A + A'BC + AB'C	    -> AB'C+AC'+A'BC
+    Z + X'Y + XY'	        -> XY'+X'Y+Z
+    A' B + C	            -> A'B+C
+    A + B＇*C	            -> A+B'C
+    Q10' + Q10	            -> Q10+Q10'
+    A‵BD＇ +  A   B   D’   + BCD + ABC‘ + AB'D -> ABC'+ABD'+AB'D+A'BD'+BCD
+    A’BD` + DBC ＋ ABC‵ + AB‘D+A'A -> AA'+ABC'+AB'D+A'BD'+BCD
+    BB'B+BA+A'A+A -> A+AA'+AB+BBB'
 
-BB'B+BA+A'A+A
-=> A+AA'+AB+BBB'
-
-POS TEST CASES:
-(B+D+A') . (A+B) . (C + A' + B) . (C + A)
-=> (A+B)(A+C)(A'+B+C)(A'+B+D)
-
-(A + B') . (C + A + D') . (B + A)
-=> (A+B)(A+B')(A+C+D')
-
+POS測資:
+    (C+A)(B+A)	            -> (A+B)(A+C)
+    (Q2+Q1')(X10+Q1)	    -> (Q1+X10)(Q1'+Q2)
+    (B' + A)(A'+B')	        -> (A+B')(A'+B')
+    (A+B+C)(A+B)	        -> (A+B)(A+B+C)
+    (X1'+Y)(C+B+A)(X1+Y)	-> (A+B+C)(X1+Y)(X1'+Y)
+    (A+B')(A+B)	            -> (A+B)(A+B')
+    (X+Y')(X+Y)	            -> (X+Y)(X+Y')
+    (A+B+C) (A'+B+C) 	    -> (A+B+C)(A'+B+C)
+    (Q2+X1)*(Q1'+X1)	    -> (Q1'+X1)(Q2+X1)
+    (B+D+A') . (A+B) . (C + A' + B) . (C + A) -> (A+B)(A+C)(A'+B+C)(A'+B+D)
+    (A + B') . (C + A + D') . (B + A) -> (A+B)(A+B')(A+C+D')
 -->
